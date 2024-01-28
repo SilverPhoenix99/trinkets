@@ -35,6 +35,19 @@ RSpec.describe ::Trinkets::Class::Init do
     it 'raises an ArgumentError if no argument is passed' do
       expect { subject.init }.to raise_error(ArgumentError)
     end
+
+    it 'raises an ArgumentError if wrong number of arguments are passed' do
+      subject.init(:c)
+      expect { subject.new(1, 2) }.to raise_error(ArgumentError)
+    end
+
+    it 'raises an ArgumentError if attr is invalid' do
+      expect { subject.init(:a, attr: :random) }.to raise_error(ArgumentError)
+    end
+
+    it 'raises an ArgumentError if attr from an argument is invalid' do
+      expect { subject.init(:b, [:a, attr: :random]) }.to raise_error(ArgumentError)
+    end
   end
 
   describe 'override default attr: :reader' do
@@ -90,6 +103,15 @@ RSpec.describe ::Trinkets::Class::Init do
 
     it "raises an ArgumentError if it isn't keyword arguments" do
       expect { subject.new(1, 2) }.to raise_error(ArgumentError)
+    end
+
+    it 'raises an ArgumentError if keywords are not present' do
+      expect { subject.new(a: 1) }.to raise_error(ArgumentError)
+      expect { subject.new(a: 1, c: 3) }.to raise_error(ArgumentError)
+    end
+
+    it 'raises an ArgumentError if keywords are unknown' do
+      expect { subject.new(a: 1, b: 2, c: 3) }.to raise_error(ArgumentError)
     end
 
   end
