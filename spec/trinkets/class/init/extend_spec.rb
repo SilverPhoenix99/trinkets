@@ -31,9 +31,13 @@ RSpec.describe ::Trinkets::Class::Init do
       instance.c = 2
       expect(instance.c).to eq(2)
     end
+
+    it 'raises an ArgumentError if no argument is passed' do
+      expect { subject.init }.to raise_error(ArgumentError)
+    end
   end
 
-  describe 'attr: :reader' do
+  describe 'override default attr: :reader' do
 
     let(:klass) do
       Class.new do
@@ -49,4 +53,69 @@ RSpec.describe ::Trinkets::Class::Init do
       expect(subject).to_not respond_to(:a=)
     end
   end
+
+  describe 'override default attr: :writer' do
+
+    let(:klass) do
+      Class.new do
+        extend ::Trinkets::Class::Init
+        init :a, attr: :writer
+      end
+    end
+
+    subject { klass.new(1) }
+
+    it 'only defines write-only attributes' do
+      expect(subject).to_not respond_to(:a)
+      expect(subject).to respond_to(:a=)
+    end
+
+  end
+
+  describe 'override kw: true' do
+
+    subject do
+      Class.new do
+        extend ::Trinkets::Class::Init
+        init :a, :b, kw: true
+      end
+    end
+
+    it 'defines keyword arguments' do
+      instance = subject.new(a: 1, b: 2)
+
+      expect(instance.a).to eq(1)
+      expect(instance.b).to eq(2)
+    end
+
+    it "raises an ArgumentError if it isn't keyword arguments" do
+      expect { subject.new(1, 2) }.to raise_error(ArgumentError)
+    end
+
+  end
+
+  describe 'attributes override default options' do
+
+    subject do
+      Class.new do
+        extend ::Trinkets::Class::Init
+        init [:a, attr: :reader],
+             :b,
+             [:c, kw: true]
+      end
+    end
+
+    it 'only defines read-only @a attribute' do
+      instance = subject.new(1, 2, c: 3)
+
+      expect(instance).to respond_to(:a)
+      expect(instance).to_not respond_to(:a=)
+      expect(instance).to respond_to(:b)
+      expect(instance).to respond_to(:b=)
+      expect(instance).to respond_to(:c)
+      expect(instance).to respond_to(:c=)
+    end
+
+  end
+
 end
