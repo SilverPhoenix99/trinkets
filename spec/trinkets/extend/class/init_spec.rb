@@ -85,6 +85,24 @@ RSpec.describe ::Trinkets::Class::Init do
 
   end
 
+  describe 'override default attr: :none' do
+
+    let(:klass) do
+      Class.new do
+        extend ::Trinkets::Class::Init
+        init :a, attr: :none
+      end
+    end
+
+    subject { klass.new(1) }
+
+    it "doesn't define any attribute" do
+      expect(subject).to_not respond_to(:a)
+      expect(subject).to_not respond_to(:a=)
+    end
+
+  end
+
   describe 'override kw: true' do
 
     subject do

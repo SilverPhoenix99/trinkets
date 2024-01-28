@@ -3,11 +3,11 @@
 module Trinkets
   module Class
     module Init
-      ATTR = %i[accessor reader writer].freeze
+      ATTR = %i[accessor reader writer none].freeze
 
       def init(*attrs, attr: ATTR.first, kw: false)
         raise ArgumentError, 'At least 1 attribute is required.' if attrs.empty?
-        raise ArgumentError, '`attr` must be one of :accessor (default), :reader or :writer' unless ATTR.include?(attr)
+        raise ArgumentError, '`attr` must be one of :accessor (default), :reader, :writer or :none' unless ATTR.include?(attr)
 
         default_attr_options = { attr: attr, kw: kw }
 
@@ -22,7 +22,7 @@ module Trinkets
             h[name] = opts
           end
 
-        attr_methods = ATTR
+        attr_methods = (ATTR - [:none])
           .each_with_object({}) do |name, h|
             h[name] = method("attr_#{name}")
           end
@@ -30,9 +30,9 @@ module Trinkets
         # even though options like `kw` aren't used, they serve here to validate the `attrs` options
         attr_init = ->(name, attr: ATTR.first, kw: false) do
           unless ATTR.include?(attr)
-            raise ArgumentError, "attr `#{name}`, option attr` must be one of :accessor (default), :reader or :writer"
+            raise ArgumentError, "attr `#{name}`, option attr` must be one of :accessor (default), :reader, :writer or :none"
           end
-          attr_methods[attr].call(name)
+          attr_methods[attr].call(name) unless attr == :none
         end
 
         attrs.each { |name, opts| attr_init.call(name, **opts) }
