@@ -1,12 +1,15 @@
 # Description
 
-It allows generating simple `#initialize` methods
+It allows generating simple `#initialize` methods.
 
 To use it define a class and call `::init` like you would call `::attr` methods:
 * pass the name of the arguments as symbols
 * pass options at the end:
-  * `attr` what getters and/or setters to define -  defaults to `:accessor` - can be `:accessor`, `:reader` or `:writer` 
-  * `kw` if arguments are to be set as keyword arguments -  defaults to false
+  * `attr` : what getters and/or setters to define
+    * can be `:accessor`, `:reader` or `:writer` 
+    * defaults to `:accessor`
+  * `kw` : if arguments are to be set as keyword arguments
+    * defaults to `false`
 
 The same options can be used per individual argument
 

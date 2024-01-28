@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative '../../../../lib/trinkets/class/init/extend'
+require_relative '../../../../lib/trinkets/extend/class/init'
 
 RSpec.describe ::Trinkets::Class::Init do
 

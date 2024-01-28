@@ -1,6 +1,6 @@
 # Trinkets
 
-It's the bootleg facets
+It's the bootleg [facets](https://github.com/rubyworks/facets?tab=readme-ov-file#ruby-facets).
 
 ## Installation
 
@@ -10,45 +10,43 @@ gem install trinkets
 
 ## Usage
 
-There are 3 ways to use trinkets
-### Loading
-#### Refinement
+There are 3 ways to load trinkets:
+* As refinements;
+* As explicit `include` or `extend`;
+* As implicit `include` or `extend`, a.k.a. monkey-patching.
+
+### Refinement
 
 ```ruby
-require 'trinkets/class/init/refine'
+require 'trinkets/refine/class/init'
 
 using ::Trinkets::Class::Init
 ```
 
-#### Extend
+### Extend
 
 ```ruby
-require 'trinkets/class/init/extend'
+require 'trinkets/extend/class/init'
 
 class Test
   extend ::Trinkets::Class::Init
 end
 ```
 
-#### Mokey Patching
+### Mokey Patching
 
 ```ruby
-require 'trinkets/class/init'
+require 'trinkets/patch/class/init'
 ```
 
-### Available modules
+## Available modules
 
 |Trinket|
 |---|
 |[class/init](doc/class/init.md)|
 
-## Development
-
-[//]: # (TODO)
-
-## Contributing
-
-[//]: # (TODO)
+[//]: # (TODO: Development)
+[//]: # (TODO: Contributing)
 
 ## License
 

@@ -1,4 +1,4 @@
-require_relative 'extend'
+require_relative '../../extend/class/init'
 
 module Trinkets
   module Class
