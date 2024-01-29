@@ -55,7 +55,7 @@ require 'trinkets/patch/class/init'
 Versions follow semantic versioning: `major.minor.patch`
 * `major`: breaking changes.
 * `minor`: improvements and new features that are backwards compatible.
-* `patch`: backwards compatible fixes to existing features.
+* `patch`: backwards compatible fixes to existing features, or documentation improvements.
 
 [//]: # (TODO: Development)
 
