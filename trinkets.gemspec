@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
   spec.description = 'Truly outrageous bootleg facets in your trinkets box.'
   spec.homepage = 'https://github.com/SilverPhoenix99/trinkets'
   spec.license = 'MIT'
-  spec.required_ruby_version = '>= 3.2.0'
+  spec.required_ruby_version = '>= 3.1.0'
   spec.metadata['homepage_uri'] = spec.homepage
   spec.files = Dir['{lib/**/*,**/*.md,LICENSE.txt}']
   spec.require_paths = ['lib']
