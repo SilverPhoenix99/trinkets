@@ -2,7 +2,7 @@
 
 It allows generating simple `#initialize` methods.
 
-To use it define a class and call `::init` like you would call `::attr` methods:
+To use it, define a class and call `::init` like you would call `::attr` methods:
 * pass the name of the arguments as symbols
 * pass options at the end:
   * `attr` : what getters and/or setters to define
@@ -11,7 +11,7 @@ To use it define a class and call `::init` like you would call `::attr` methods:
   * `kw` : if arguments are to be set as keyword arguments
     * defaults to `false`
 
-The same options can be used per individual argument
+The same options can be used per individual argument.
 
 # Examples
 
@@ -31,6 +31,7 @@ class Test
 end
 
 test = Test.new(1, 2)
+
 test.a
 # 1
 
@@ -38,7 +39,6 @@ test.b
 # 2
 
 test.a = 3
-test.a
 # 3
 ```
 
@@ -49,7 +49,7 @@ class TestAttr
 end
 
 # would be the same as
-class Test
+class TestAttr
   attr_reader :a, :b
   def initialize(a, b)
     @a = a
@@ -57,7 +57,8 @@ class Test
   end
 end
 
-test = Test.new(1, 2)
+test = TestAttr.new(1, 2)
+
 test.a
 # 1
 
@@ -75,7 +76,7 @@ class TestKW
 end
 
 # would be the same as
-class Test
+class TestKW
   attr_accessor :a, :b
   def initialize(a:, b:)
     @a = a
@@ -83,7 +84,8 @@ class Test
   end
 end
 
-test = Test.new(a: 1, b: 2)
+test = TestKW.new(a: 1, b: 2)
+
 test.a
 # 1
 
@@ -91,9 +93,9 @@ test.b
 # 2
 ```
 
-## Individual argument options
+## Individual attribute options
 ```ruby
-class TestIndividualArgsOptions
+class TestAttrOptions
   init [:a, kw: true, attr: :reader],
        :b,
        [:c, kw: true],
@@ -101,7 +103,7 @@ class TestIndividualArgsOptions
 end
 
 # would be the same as
-class Test
+class TestAttrOptions
   attr_reader :a
   attr_accessor :b, :c
   def initialize(b, d, a:, c:)
@@ -112,7 +114,8 @@ class Test
   end
 end
 
-test = Test.new(2, 4, a: 1, c: 3)
+test = TestAttrOptions.new(2, 4, a: 1, c: 3)
+
 test.a
 # 1
 
@@ -126,5 +129,38 @@ test.d
 # => raises NoMethodError
 
 test.a = 5
+# => raises NoMethodError
+```
+
+## Mixed together
+```ruby
+class TestMixed
+  init [:a, attr: :reader],
+       :b,
+       kw: true
+end
+
+# would be the same as
+class TestMixed
+  attr_reader :a
+  attr_accessor :b
+  def initialize(a:, b:)
+    @a = a
+    @b = b
+  end
+end
+
+test = TestMixed.new(1, 2)
+
+test.a
+# 1
+
+test.b
+# 2
+
+test.b = 3
+# 3
+
+test.a = 4
 # => raises NoMethodError
 ```
