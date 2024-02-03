@@ -4,6 +4,6 @@ module ::Enumerable
   include ::Trinkets::Enumerable::WithHash
 end
 
-module ::Enumerator
+class ::Enumerator
   include ::Trinkets::Enumerator::WithHash
 end
