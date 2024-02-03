@@ -4,6 +4,21 @@ It defines `Enumerable#each_with_hash`, which is a simple wrapper for `Enumerabl
 
 It also includes the alias `Enumerator#with_hash(&)`.
 
+# Requiring
+
+```ruby
+# As a refinement
+require 'trinkets/enumerable/each_with_hash' # implicit
+# or
+require 'trinkets/refine/enumerable/each_with_hash' # explicit 
+
+# As include
+require 'trinkets/include/enumerable/each_with_hash'
+
+# As monkey-patch
+require 'trinkets/patch/enumerable/each_with_hash'
+```
+
 # Examples
 
 These examples are all equivalent.
