@@ -13,6 +13,21 @@ To use it, define a class and call `::init` like you would call `::attr` methods
 
 The same options can be used per individual argument.
 
+# Requiring
+
+```ruby
+# As a refinement
+require 'trinkets/class/init' # implicit
+# or
+require 'trinkets/refine/class/init' # explicit 
+
+# As extend
+require 'trinkets/extend/class/init'
+
+# As monkey-patch
+require 'trinkets/patch/class/init'
+```
+
 # Examples
 
 ## Simple Initialize
