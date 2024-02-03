@@ -34,13 +34,22 @@ The `refine` subdirectory is the default, and it can be omitted from `require`. 
 require 'trinkets/refine/class/init'
 ```
 
-### Extend
+### Extend / Include
 
 ```ruby
 require 'trinkets/extend/class/init'
 
 class Test
   extend ::Trinkets::Class::Init
+end
+```
+
+```ruby
+require 'trinkets/include/enumerable/each_with_hash'
+
+class Test
+  include Enumerable
+  include ::Trinkets::Enumerable::WithHash
 end
 ```
 
