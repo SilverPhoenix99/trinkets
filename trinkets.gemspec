@@ -14,5 +14,5 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = '>= 3.1.0'
   spec.metadata['homepage_uri'] = spec.homepage
   spec.files = Dir['{lib/**/*,**/*.md,LICENSE.txt}']
-  spec.require_paths = %w[lib/explicit lib/implicit]
+  spec.require_paths = %w[lib/explicit lib/implicit lib/trinkets]
 end
