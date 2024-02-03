@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative '../../../../lib/trinkets/explicit/refine/enumerable/each_with_hash'
+require_relative '../../../../lib/explicit/trinkets/refine/enumerable/each_with_hash'
 
 using ::Trinkets::Enumerable::WithHash
 
