@@ -4,15 +4,17 @@ require_relative '../../../../lib/trinkets/explicit/refine/enumerable/each_with_
 
 using ::Trinkets::Enumerable::WithHash
 
-Rspec.describe ::Trinkets::Enumerable::WithHash do
+RSpec.describe ::Trinkets::Enumerable::WithHash do
 
-  let(:array) { [[:a, 1],  [:b, 1]] }
+  let(:array) { [[:a, 1],  [:b, 2]] }
   let(:expected) { { a: 1, b: 2 } }
   let(:enumerable_class) {
-    class EnumerableClass
+    Class.new do
       include Enumerable
 
-      def each; end
+      def each
+        [].each
+      end
     end
   }
 
@@ -22,20 +24,20 @@ Rspec.describe ::Trinkets::Enumerable::WithHash do
         h[k] = v
       end
 
-      expect(actual).to eq(:expected)
+      expect(actual).to eq(expected)
     end
 
     it 'returns an Enumerator if block is not given' do
-      expect(actual.each_with_hash).to be_a(Enumerator)
+      expect(array.each_with_hash).to be_a(Enumerator)
     end
 
     it 'returns an Enumerator when each is called on it' do
-      expect(actual.each_with_hash.each).to be_a(Enumerator)
+      expect(array.each_with_hash.each).to be_a(Enumerator)
     end
 
     it 'can be called from a class including Enumerable' do
       instance = enumerable_class.new
-      expect(instance).to respond_to(:each_with_hash)
+      expect(instance.respond_to?(:each_with_hash)).to be(true)
     end
   end
 
@@ -45,20 +47,20 @@ Rspec.describe ::Trinkets::Enumerable::WithHash do
         h[k] = v
       end
 
-      expect(actual).to eq(:expected)
+      expect(actual).to eq(expected)
     end
 
     it 'returns an Enumerator if block is not given' do
-      expect(actual.each.with_hash).to be_a(Enumerator)
+      expect(array.each.with_hash).to be_a(Enumerator)
     end
 
     it 'returns an Enumerator when each is called on it' do
-      expect(actual.each.with_hash.each).to be_a(Enumerator)
+      expect(array.each.with_hash.each).to be_a(Enumerator)
     end
 
     it 'can be called from an enumerator from a class including Enumerable' do
       instance = enumerable_class.new
-      expect(instance.each).to respond_to(:with_hash)
+      expect(instance.each.respond_to?(:with_hash)).to be(true)
     end
   end
 end
