@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative '../../../../lib/trinkets/explicit/refine/class/init'
+require_relative '../../../../lib/explicit/trinkets/refine/class/init'
 
 using ::Trinkets::Class::Init
 
