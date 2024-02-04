@@ -15,4 +15,7 @@ Gem::Specification.new do |spec|
   spec.metadata['homepage_uri'] = spec.homepage
   spec.files = Dir['{lib/**/*,**/*.md,LICENSE.txt}']
   spec.require_paths = %w[lib/explicit lib/implicit lib/trinkets]
+
+  spec.add_development_dependency 'rspec', '~> 3.0'
+  spec.add_development_dependency 'simplecov', '~> 0.22.0'
 end
