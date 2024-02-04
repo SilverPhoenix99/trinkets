@@ -4,8 +4,14 @@ It's the bootleg [facets](https://github.com/rubyworks/facets?tab=readme-ov-file
 
 ## Installation
 
+### RubyGems
 ```
 gem install trinkets
+```
+
+### Bundler
+```ruby
+gem 'trinkets', require: false
 ```
 
 ## Usage
