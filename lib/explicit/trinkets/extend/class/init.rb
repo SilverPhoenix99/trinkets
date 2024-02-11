@@ -4,21 +4,68 @@ module Trinkets
   module Class
     module Init
       ATTR = %i[accessor reader writer none].freeze
-      Attribute = Struct.new(:name, :attr, :kw, keyword_init: true)
+
+      Parameter = Struct.new(:name, :attr, :kw, keyword_init: true)
 
       # @!attribute r req
-      #   @return [Hash[Symbol, Attribute]]
+      #   @return [Array[Parameter]]
       # @!attribute r key_req
-      #   @return [Hash[Symbol, Attribute]]
+      #   @return [Array[Parameter]]
       # @!attribute r key_opt
-      #   @return [Hash[Symbol, Attribute]]
+      #   @return [Array[Parameter]]
       class Parameters < Struct.new(:req, :key_req, :key_opt, keyword_init: true)
 
+        #@return [Parameters]
+        def self.build(params, **default_options)
+
+          raise ArgumentError, 'At least 1 attribute is required.' if params.empty?
+
+          unless ::Trinkets::Class::Init::ATTR.include?(default_options[:attr])
+            attr = default_options[:attr].inspect
+            raise ArgumentError, "wrong `attr` type (given #{attr}, expected :accessor (default), :reader, :writer or :none)"
+          end
+
+          # @type [Array[Parameter]]
+          params = params.map do |name, opts|
+            name = name.to_s.sub(/^@/, '').to_sym
+
+            opts ||= {}
+            opts.reject! { |_, v| v.nil? }
+            opts = default_options.merge(opts)
+
+            Parameter.new(name:, **opts)
+          end
+
+          repeated_params = params.map(&:name)
+            .tally
+            .select { |_, count| count > 1 }
+            .keys
+
+          raise ArgumentError, "duplicated argument names: #{repeated_params.join(', ')}" if repeated_params.any?
+
+          # hash with 3 keys: {
+          #   FalseClass => { :name => Parameter }  # positional args
+          #   TrueClass  => { :name => Parameter }  # mandatory kw args
+          #   Hash       => { :name => Parameter }  # optional kw args with default value
+          # }
+          #@type [Hash[Class, Array[Parameter]]]
+          params = params.group_by { |param| param.kw.class }
+
+          Parameters.new(
+            req:     [*params[FalseClass]],
+            key_req: [*params[TrueClass]],
+            key_opt: [*params[Hash]]
+          )
+
+        end
+
+        #@return [Parameters]
         def bind(values, kw_values)
+
           validate values, kw_values
 
-          req = self.req.values.zip(values).each_with_object({}) do |(param, value), h|
-            h[param.name] = BoundAttribute.new(
+          req = self.req.zip(values).map do |(param, value)|
+            BoundParameter.new(
               name: param.name,
               attr: param.attr,
               kw: param.kw,
@@ -26,8 +73,8 @@ module Trinkets
             )
           end
 
-          key_req = self.key_req.values.each_with_object({}) do |param, h|
-            h[param.name] = BoundAttribute.new(
+          key_req = self.key_req.map do |param|
+            BoundParameter.new(
               name: param.name,
               attr: param.attr,
               kw: param.kw,
@@ -35,9 +82,9 @@ module Trinkets
             )
           end
 
-          key_opt = self.key_opt.values.each_with_object({}) do |param, h|
+          key_opt = self.key_opt.map do |param|
             key, value = kw_values.assoc(param.name)
-            h[param.name] = BoundAttribute.new(
+            BoundParameter.new(
               name: param.name,
               attr: param.attr,
               kw: param.kw,
@@ -49,9 +96,9 @@ module Trinkets
 
         end
 
-        def all = req.merge(all_keys)
+        def all_params = req + all_key_params
 
-        def all_keys = key_req.merge(key_opt)
+        def all_key_params = key_req + key_opt
 
         private def validate(values, kw_values)
 
@@ -59,13 +106,13 @@ module Trinkets
             raise ArgumentError, "wrong number of arguments (given #{values.size}, expected #{req.size})"
           end
 
-          missing_keys = key_req.keys - kw_values.keys
+          missing_keys = key_req.map(&:name) - kw_values.keys
           unless missing_keys.empty?
             missing_keys = missing_keys.map(&:inspect).join(', ')
             raise ArgumentError, "missing keywords: #{missing_keys}"
           end
 
-          unknown_keywords = kw_values.except(*key_req.keys, *key_opt.keys)
+          unknown_keywords = kw_values.except(*all_key_params.map(&:name))
           unless unknown_keywords.empty?
             unknown_keywords = unknown_keywords.keys.map(&:to_sym).map(&:inspect).join(', ')
             raise ArgumentError, "unknown keywords: #{unknown_keywords}"
@@ -74,7 +121,7 @@ module Trinkets
         end
       end
 
-      class BoundAttribute < Attribute
+      class BoundParameter < Parameter
 
         attr_reader :value
 
@@ -84,8 +131,9 @@ module Trinkets
         end
       end
 
-      def init(*attrs, attr: ATTR.first, kw: false)
-        attrs = Init.send(:sanitize_attrs, attrs, attr:, kw:)
+      def init(*params, attr: ATTR.first, kw: false)
+
+        params = Parameters.build(params, attr:, kw:)
 
         # @type [Hash[Symbol, Method]]
         attr_methods = (ATTR - [:none])
@@ -93,31 +141,16 @@ module Trinkets
             h[name] = method("attr_#{name}")
           end
 
-        # even though options like `kw` aren't used, they serve here to validate the `attrs` options
-        attr_init = ->(name, attr: ATTR.first, kw:) do
+        attr_init = ->(name, attr: ATTR.first) do
           unless ATTR.include?(attr)
             raise ArgumentError, "wrong `attr` type for `#{name.inspect}` (given #{attr.inspect}, expected :accessor (default), :reader, :writer or :none)"
           end
           attr_methods[attr].call(name) unless attr == :none
         end
 
-        attrs.each { |param| attr_init.call(param.name, attr: param.attr, kw: param.kw) }
-
-        # hash with 3 keys: {
-        #   FalseClass => { :name => Attribute }  # positional args
-        #   TrueClass  => { :name => Attribute }  # mandatory kw args
-        #   Hash       => { :name => Attribute }  # optional kw args with default value
-        # }
-        grouped_attrs = attrs.group_by { |param| param.kw.class }
-          .transform_values! do |params|
-            params.each_with_object({}) { |p, h| h[p.name] = p }
-          end
-
-        params = Parameters.new(
-          req:     grouped_attrs[FalseClass] || {},
-          key_req: grouped_attrs[TrueClass]  || {},
-          key_opt: grouped_attrs[Hash]       || {}
-        )
+        params.all_params.each do |param|
+          attr_init.call param.name, attr: param.attr
+        end
 
         init_method = Init.send(:define_initialize, params)
         define_method :initialize, init_method
@@ -125,46 +158,14 @@ module Trinkets
 
       class << self
 
-        # @return [Array[Attribute]]
-        private def sanitize_attrs(attrs, **default_options)
-
-          raise ArgumentError, 'At least 1 attribute is required.' if attrs.empty?
-
-          unless ::Trinkets::Class::Init::ATTR.include?(default_options[:attr])
-            attr = default_options[:attr].inspect
-            raise ArgumentError, "wrong `attr` type (given #{attr}, expected :accessor (default), :reader, :writer or :none)"
-          end
-
-          # @type [Array[Attribute]]
-          attrs = attrs.map do |attr|
-            name, opts = [*attr]
-            name = name.to_s.sub(/^@/, '').to_sym
-
-            opts ||= {}
-            opts.reject! { |_, v| v.nil? }
-            opts = default_options.merge(opts)
-
-            Attribute.new(name:, **opts)
-          end
-
-          repeated_attrs = attrs.map(&:name)
-            .tally
-            .select { |_, count| count > 1 }
-            .keys
-
-          raise ArgumentError, "duplicated argument names: #{repeated_attrs.join(', ')}" if repeated_attrs.any?
-
-          attrs
-        end
-
         # @param [Parameters] params
         private def define_initialize(params)
           ->(*values, **kw_values) do
 
             params = params.bind(values, kw_values)
 
-            params.all.each do |name, param|
-              instance_variable_set "@#{name}", param.value
+            params.all_params.each do |param|
+              instance_variable_set "@#{param.name}", param.value
             end
           end
         end
