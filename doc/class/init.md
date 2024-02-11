@@ -14,6 +14,9 @@ To use it, define a class and call `::init` like you would call `::attr` methods
     * when it's a hash, like `{ default: <VALUE> }`, it's an optional keyword argument
     * an empty hash `{}` is equivalent to `{ default: nil }`
     * defaults to `false`
+  * `super` : if the argument should be passed to `super()`
+    * the super class can have a `initialize` or call `init`
+    * default: `false`
 
 The same options can be used per individual argument.
 
@@ -44,8 +47,9 @@ end
 class Test
   attr_accessor :a, :b
   def initialize(a, b)
-    @a = a
-    @b = b
+    super()
+    @a = a unless instance_variable_defined?(:@a)
+    @b = b unless instance_variable_defined?(:@b)
   end
 end
 
@@ -71,8 +75,9 @@ end
 class TestAttr
   attr_reader :a, :b
   def initialize(a, b)
-    @a = a
-    @b = b
+    super()
+    @a = a unless instance_variable_defined?(:@a)
+    @b = b unless instance_variable_defined?(:@b)
   end
 end
 
@@ -98,8 +103,9 @@ end
 class TestKW
   attr_accessor :a, :b
   def initialize(a:, b:)
-    @a = a
-    @b = b
+    super()
+    @a = a unless instance_variable_defined?(:@a)
+    @b = b unless instance_variable_defined?(:@b)
   end
 end
 
@@ -126,10 +132,11 @@ class TestAttrOptions
   attr_reader :a
   attr_accessor :b, :c
   def initialize(b, d, a:, c:)
-    @a = a
-    @b = b
-    @c = c
-    @d = d
+    super()
+    @a = a unless instance_variable_defined?(:@a)
+    @b = b unless instance_variable_defined?(:@b)
+    @c = c unless instance_variable_defined?(:@c)
+    @d = d unless instance_variable_defined?(:@d)
   end
 end
 
@@ -152,7 +159,6 @@ test.a = 5
 ```
 
 ## Default values for keyword arguments
-
 ```ruby
 class TestDefaultKw
   init [:a, kw: true],
@@ -163,9 +169,10 @@ end
 # would be the same as
 class TestDefaultKw
   attr_accessor :a, :b
-  def initialize(a: , b: 3)
-    @a = a
-    @b = b
+  def initialize(a:, b: 3)
+    super()
+    @a = a unless instance_variable_defined?(:@a)
+    @b = b unless instance_variable_defined?(:@b)
   end
 end
 
@@ -177,6 +184,27 @@ test.a
 test.b
 # 3
 ``` 
+
+## Super
+```ruby
+class TestParent
+  init :a # also works with a plain initialize()
+end
+
+class TestChild
+  init [:a, super: true], :b
+end
+
+# would be the same as
+class TestChild
+  attr_accessor :a, :b
+  def initialize(a, b)
+    super(a)
+    @a = a unless instance_variable_defined?(:@a)
+    @b = b unless instance_variable_defined?(:@b)
+  end
+end
+```
 
 ## Mixed together
 ```ruby
@@ -191,8 +219,9 @@ class TestMixed
   attr_reader :a
   attr_accessor :b
   def initialize(a:, b:)
-    @a = a
-    @b = b
+    super()
+    @a = a unless instance_variable_defined?(:@a)
+    @b = b unless instance_variable_defined?(:@b)
   end
 end
 
