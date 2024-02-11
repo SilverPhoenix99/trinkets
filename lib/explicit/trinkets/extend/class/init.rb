@@ -3,12 +3,12 @@
 module Trinkets
   module Class
     module Init
+      ATTR = %i[accessor reader writer none].freeze
+      Attribute = Struct.new(:name, :attr, :kw, keyword_init: true)
       Parameters = Struct.new(:req, :key_req, :key_opt, keyword_init: true)
 
-      ATTR = %i[accessor reader writer none].freeze
-
       def init(*attrs, attr: ATTR.first, kw: false)
-        attrs = Init.send(:sanitize_attrs, attrs, attr: attr, kw: kw)
+        attrs = Init.send(:sanitize_attrs, attrs, attr:, kw:)
 
         # @type [Hash[Symbol, Method]]
         attr_methods = (ATTR - [:none])
@@ -24,7 +24,7 @@ module Trinkets
           attr_methods[attr].call(name) unless attr == :none
         end
 
-        attrs.each { |name, opts| attr_init.call(name, **opts) }
+        attrs.each { |param| attr_init.call(param.name, attr: param.attr, kw: param.kw) }
 
         # hash with 3 keys: {
         #   FalseClass => []  # positional args
@@ -32,7 +32,7 @@ module Trinkets
         #   Hash       => []  # optional kw args with default value
         # }
         grouped_params = attrs
-          .map { |name, opts| [name, opts[:kw] || false] }
+          .each_with_object({}) { |param, h| h[param.name] = param.kw }
           .group_by { _1.last.class }
 
         params = Parameters.new(
@@ -47,6 +47,8 @@ module Trinkets
       end
 
       class << self
+
+        # @return [Array[Attribute]]
         private def sanitize_attrs(attrs, **default_options)
 
           raise ArgumentError, 'At least 1 attribute is required.' if attrs.empty?
@@ -56,23 +58,26 @@ module Trinkets
             raise ArgumentError, "wrong `attr` type (given #{attr}, expected :accessor (default), :reader, :writer or :none)"
           end
 
-          # Normalize attrs into an array: [[:name, **options], ...]
-          # @type [Array[Array[Symbol, Hash]]]
-          attrs = attrs.map do |a|
-            name, opts = [*a]
+          # @type [Array[Attribute]]
+          attrs = attrs.map do |attr|
+            name, opts = [*attr]
             name = name.to_s.sub(/^@/, '').to_sym
-            opts = default_options.merge(opts || {})
-            [name, opts]
+
+            opts ||= {}
+            opts.reject! { |_, v| v.nil? }
+            opts = default_options.merge(opts)
+
+            Attribute.new(name:, **opts)
           end
 
-          repeated_attrs = attrs.map(&:first)
+          repeated_attrs = attrs.map(&:name)
             .tally
             .select { |_, count| count > 1 }
             .keys
 
           raise ArgumentError, "duplicated argument names: #{repeated_attrs.join(', ')}" if repeated_attrs.any?
 
-          attrs.to_h
+          attrs
         end
 
         # @param [Parameters] params
@@ -107,7 +112,6 @@ module Trinkets
               value = kw_values.include?(name) ? kw_values[name] : default_value
               instance_variable_set "@#{name}", value
             end
-
           end
         end
       end
