@@ -81,23 +81,7 @@ module Trinkets
         private def define_initialize(params)
           ->(*values, **kw_values) do
 
-            unless params.req.size == values.size
-              raise ArgumentError, "wrong number of arguments (given #{values.size}, expected #{params.req.size})"
-            end
-
-            key_req = params.key_req.map(&:name)
-            missing_keys = key_req - kw_values.keys
-            unless missing_keys.empty?
-              missing_keys = missing_keys.map(&:inspect).join(', ')
-              raise ArgumentError, "missing keywords: #{missing_keys}"
-            end
-
-            key_opt = params.key_opt.map(&:name)
-            unknown_keywords = kw_values.except(*key_req, *key_opt)
-            unless unknown_keywords.empty?
-              unknown_keywords = unknown_keywords.keys.map(&:to_sym).map(&:inspect).join(', ')
-              raise ArgumentError, "unknown keywords: #{unknown_keywords}"
-            end
+            ::Trinkets::Class::Init.send :validate_parameters, params, values, kw_values
 
             params.req.zip(values).each do |param, value|
               instance_variable_set "@#{param.name}", value
@@ -113,6 +97,28 @@ module Trinkets
               instance_variable_set "@#{param.name}", value
             end
           end
+        end
+
+        private def validate_parameters(params, values, kw_values)
+
+          unless params.req.size == values.size
+            raise ArgumentError, "wrong number of arguments (given #{values.size}, expected #{params.req.size})"
+          end
+
+          key_req = params.key_req.map(&:name)
+          missing_keys = key_req - kw_values.keys
+          unless missing_keys.empty?
+            missing_keys = missing_keys.map(&:inspect).join(', ')
+            raise ArgumentError, "missing keywords: #{missing_keys}"
+          end
+
+          key_opt = params.key_opt.map(&:name)
+          unknown_keywords = kw_values.except(*key_req, *key_opt)
+          unless unknown_keywords.empty?
+            unknown_keywords = unknown_keywords.keys.map(&:to_sym).map(&:inspect).join(', ')
+            raise ArgumentError, "unknown keywords: #{unknown_keywords}"
+          end
+
         end
       end
     end
