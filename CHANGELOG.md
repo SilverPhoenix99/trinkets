@@ -1,4 +1,7 @@
 
+### [0.4.0](https://github.com/SilverPhoenix99/trinkets/tree/v0.4.0)
+* `Class::init`: Allow default values for keyword arguments.
+ 
 ### [0.3.1](https://github.com/SilverPhoenix99/trinkets/tree/v0.3.1)
 * Fixed repeated arguments in `Class::init`.
 
