@@ -50,6 +50,17 @@ RSpec.describe ::Trinkets::Class::Init do
     end
   end
 
+  describe 'repeated parameters' do
+    it 'does not accept repeated arguments' do
+      expect {
+        Class.new do
+          extend ::Trinkets::Class::Init
+          init :a, :@a, :b, [:b], :c, :d, :d, :e, [:e, kw: true]
+        end
+      }.to raise_error(ArgumentError, "duplicated argument names: a, b, d, e")
+    end
+  end
+
   describe 'override default attr: :reader' do
 
     let(:klass) do

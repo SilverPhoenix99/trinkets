@@ -11,16 +11,7 @@ module Trinkets
 
         default_attr_options = { attr: attr, kw: kw }
 
-        # Normalize attrs into a hash: { :name => **options }
-        # @type [Hash[Symbol, Hash]]
-        attrs = attrs.map { |a| [*a] }
-          .map { |a| a.size == 1 ? a << {} : a }
-          .each_with_object({}) do |(name, opts), h|
-            # name, opts = a
-            name = name.to_s.sub(/^@/, '').to_sym
-            opts = default_attr_options.merge(opts)
-            h[name] = opts
-          end
+        attrs = ::Trinkets::Class.send(:sanitize_attrs, attrs, default_attr_options)
 
         attr_methods = (ATTR - [:none])
           .each_with_object({}) do |name, h|
@@ -43,12 +34,32 @@ module Trinkets
           .partition { |_, kw_opt| kw_opt }
           .map(&:to_h)
 
-        init_method = ::Trinkets::Class.send :define_initialize, attrs, kw_attrs
+        init_method = ::Trinkets::Class.send(:define_initialize, attrs, kw_attrs)
         define_method :initialize, init_method
       end
     end
 
     class << self
+      private def sanitize_attrs(attrs, default_attr_options)
+        # Normalize attrs into an array: [[:name, **options], ...]
+        # @type [Array[Array[Symbol, Hash]]]
+        attrs = attrs.map do |a|
+          name, opts = [*a]
+          name = name.to_s.sub(/^@/, '').to_sym
+          opts = default_attr_options.merge(opts || {})
+          [name, opts]
+        end
+
+        repeated_attrs = attrs.map(&:first)
+          .tally
+          .select { |_, count| count > 1 }
+          .keys
+
+        raise ArgumentError, "duplicated argument names: #{repeated_attrs.join(', ')}" if repeated_attrs.any?
+
+        attrs.to_h
+      end
+
       # @param [Hash[Symbol  Boolean]] attrs
       # @param [Hash[Symbol  Boolean]] kw_attrs
       private def define_initialize(attrs, kw_attrs)

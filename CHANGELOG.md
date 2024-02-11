@@ -1,4 +1,7 @@
 
+### [0.3.1](https://github.com/SilverPhoenix99/trinkets/tree/v0.3.1)
+* Fixed repeated arguments in `Class::init`.
+
 ### [0.3.0](https://github.com/SilverPhoenix99/trinkets/tree/v0.3.0)
 * Restructured folders to default to `/refine/`.
 * Added `Enumerable#each_with_hash`/`Enumerator#with_hash`.
