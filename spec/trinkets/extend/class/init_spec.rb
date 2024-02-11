@@ -12,6 +12,10 @@ RSpec.describe ::Trinkets::Class::Init do
       end
     end
 
+    it 'has no visibility of Parameters class' do
+      expect { subject::Parameters }.to raise_error(NameError)
+    end
+
     it 'has no visibility of ATTR constant' do
       expect { subject::ATTR }.to raise_error(NameError)
     end

@@ -3,6 +3,8 @@
 module Trinkets
   module Class
     module Init
+      Parameters = Struct.new(:req, :key_req, :key_opt, keyword_init: true)
+
       ATTR = %i[accessor reader writer none].freeze
 
       def init(*attrs, attr: ATTR.first, kw: false)
@@ -33,12 +35,14 @@ module Trinkets
           .map { |name, opts| [name, opts[:kw] || false] }
           .group_by { _1.last.class }
 
-        pos_params    = [*grouped_params[FalseClass]].map(&:first)
-        kw_params     = [*grouped_params[TrueClass]].map(&:first)
-        opt_kw_params = [*grouped_params[Hash]].to_h
-          .transform_values! { _1[:default] }
+        params = Parameters.new(
+          req:     [*grouped_params[FalseClass]].map(&:first),
+          key_req: [*grouped_params[TrueClass]].map(&:first),
+          key_opt: [*grouped_params[Hash]].to_h
+                     .transform_values! { _1[:default] }
+        )
 
-        init_method = Init.send(:define_initialize, pos_params, kw_params, opt_kw_params)
+        init_method = Init.send(:define_initialize, params)
         define_method :initialize, init_method
       end
 
@@ -71,37 +75,35 @@ module Trinkets
           attrs.to_h
         end
 
-        # @param [Array[Symbol]] pos_params
-        # @param [Array[Symbol]] kw_params
-        # @param [Hash[Symbol, Object]] opt_kw_params
-        private def define_initialize(pos_params, kw_params, opt_kw_params)
+        # @param [Parameters] params
+        private def define_initialize(params)
           ->(*values, **kw_values) do
 
-            unless pos_params.size == values.size
-              raise ArgumentError, "wrong number of arguments (given #{values.size}, expected #{pos_params.size})"
+            unless params.req.size == values.size
+              raise ArgumentError, "wrong number of arguments (given #{values.size}, expected #{params.req.size})"
             end
 
-            missing_keys = kw_params - kw_values.keys
+            missing_keys = params.key_req - kw_values.keys
             unless missing_keys.empty?
               missing_keys = missing_keys.map(&:inspect).join(', ')
               raise ArgumentError, "missing keywords: #{missing_keys}"
             end
 
-            unknown_keywords = kw_values.except(*kw_params, *opt_kw_params.keys)
+            unknown_keywords = kw_values.except(*params.key_req, *params.key_opt.keys)
             unless unknown_keywords.empty?
               unknown_keywords = unknown_keywords.keys.map(&:to_sym).map(&:inspect).join(', ')
               raise ArgumentError, "unknown keywords: #{unknown_keywords}"
             end
 
-            pos_params.zip(values).each do |name, value|
+            params.req.zip(values).each do |name, value|
               instance_variable_set "@#{name}", value
             end
 
-            kw_params.each do |name|
+            params.key_req.each do |name|
               instance_variable_set "@#{name}", kw_values[name]
             end
 
-            opt_kw_params.each do |name, default_value|
+            params.key_opt.each do |name, default_value|
               value = kw_values.include?(name) ? kw_values[name] : default_value
               instance_variable_set "@#{name}", value
             end
