@@ -221,4 +221,36 @@ RSpec.describe ::Trinkets::Class::Init do
       expect(instance).to be_instance_variable_defined(:@d)
     end
   end
+
+  describe "Super" do
+    let(:parent) do
+      Class.new do
+        attr_reader :a, :c
+
+        def initialize(a, c: 22)
+          @a = a * 2
+          @c = c
+        end
+      end
+    end
+
+    it 'accepts arguments from super and itself and calls super on the parent class' do
+      child_class = Class.new(parent) do
+        extend ::Trinkets::Class::Init
+        init [:a, super: true],
+             :b
+      end
+      instance = child_class.new(42, 43)
+      expect(instance).to have_attributes(a: 84, b: 43, c: 22)
+    end
+
+    it 'accepts arguments from super and itself and calls super on the parent class' do
+      child_class = Class.new(parent) do
+        extend ::Trinkets::Class::Init
+        init :a, super: true
+      end
+      instance = child_class.new(42)
+      expect(instance).to have_attributes(a: 84, c: 22)
+    end
+  end
 end

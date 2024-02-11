@@ -5,7 +5,25 @@ module Trinkets
     module Init
       ATTR = %i[accessor reader writer none].freeze
 
-      Parameter = Struct.new(:name, :attr, :kw, keyword_init: true)
+      class Parameter
+        attr_reader :name, :attr, :kw, :super
+        def initialize(name:, attr:, kw:, super:)
+          @name  = name
+          @attr  = attr
+          @kw    = kw
+          @super = [super:].first[:super]
+        end
+      end
+
+      class BoundParameter < Parameter
+
+        attr_reader :value
+
+        def initialize(name:, attr:, kw:, super:, value:)
+          super(name:, attr:, kw:, super:)
+          @value = value
+        end
+      end
 
       # @!attribute r req
       #   @return [Array[Parameter]]
@@ -69,6 +87,7 @@ module Trinkets
               name: param.name,
               attr: param.attr,
               kw: param.kw,
+              super: param.super,
               value:
             )
           end
@@ -78,6 +97,7 @@ module Trinkets
               name: param.name,
               attr: param.attr,
               kw: param.kw,
+              super: param.super,
               value: kw_values[param.name]
             )
           end
@@ -88,6 +108,7 @@ module Trinkets
               name: param.name,
               attr: param.attr,
               kw: param.kw,
+              super: param.super,
               value: key ? value : param.kw[:default]
             )
           end
@@ -121,19 +142,9 @@ module Trinkets
         end
       end
 
-      class BoundParameter < Parameter
+      def init(*params, attr: ATTR.first, kw: false, super: false)
 
-        attr_reader :value
-
-        def initialize(name:, attr:, kw:, value:)
-          super(name:, attr:, kw:)
-          @value = value
-        end
-      end
-
-      def init(*params, attr: ATTR.first, kw: false)
-
-        params = Parameters.build(params, attr:, kw:)
+        params = Parameters.build(params, attr:, kw:, super:)
 
         # @type [Hash[Symbol, Method]]
         attr_methods = (ATTR - [:none])
@@ -164,8 +175,17 @@ module Trinkets
 
             params = params.bind(values, kw_values)
 
+            super_req = params.req.select(&:super).map(&:value)
+            super_kws = params.all_key_params.select(&:super)
+              .each_with_object({}) do |param, h|
+                h[param.name] = param.value
+              end
+
+            super *super_req, **super_kws
+
             params.all_params.each do |param|
-              instance_variable_set "@#{param.name}", param.value
+              name = "@#{param.name}"
+              instance_variable_set(name, param.value) unless instance_variable_defined?(name)
             end
           end
         end
